@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="wrap" class="container-fluid">
+    <div class="page-header">
+    <h1>BuzzURL</h1>
+    <p>Make unnecessarily long urls filled with technology buzzwords</p>
+    </div>
+    <div class="row">
+        <div class="col-sm-6">
+            <form id="url-form">
+                <div class="form-group">
+                    <label for="url-input">URL</label>
+                    <input required type="url" id="url-input" name="url-input" class="form-control" placeholder="http://alexblanck.com/">
+                </div>
+            </form>
+        </div>
+        <div id="outputs" class="col-sm-6">
+            <p id="success-output">
+                <button id="copy-button" data-clipboard-target="url-output" class="btn btn-primary">Copy</button>
+                <a id="url-output"></a>
+            </p>
+            <p id="error-output">
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span id="error-text">
+                Something is wrong
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+<div id="footer">
+    <a href="http://github.com/alexblanck/buzz-url" class="btn btn-default">View on GitHub</a>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+html, body {
+    height: 100%;
+}
+
+#wrap {
+    min-height: 100%;
+    margin-bottom: -74px;
+}
+
+#wrap:after {
+    content: "";
+    display: block;
+}
+
+#footer, #wrap:after {
+    height: 74px;
+}
+
+#footer {
+    text-align: center;
+    padding: 20px;
+}
+
+/* Hide outputs to start with */
+#error-output, #success-output {
+    display: none;
+}
+
+#error-output{
+    color: #a94442;
+}
+
+#outputs{
+    margin-top: 33px;
+}
+
+#copy-button {
+    margin-top: -9px;
+    margin-left: 10px;
+    float: right;
+}
+
+/* Styles copied from boostrap to emulate button styles */
+.zeroclipboard-is-hover {
+    color: #fff;
+    background-color: #3071a9;
+    border-color: #285e8e
+}
+
+.zeroclipboard-is-active {
+    color: #fff
+    background-color: #3071a9;
+    background-image: none;
+    outline: 0px none;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15) inset, 0px 1px 2px rgba(0, 0, 0, 0.05);
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/zeroclipboard/2.2.0/ZeroClipboard.min.js"></script>
+<script>
+$(document).ready(function(){
+    var url_form = $("#url-form");
+    var url_input = $("#url-input");
+    var success_output = $("#success-output");
+    var error_output = $("#error-output");
+    var error_text = $("#error-text");
+    var url_output = $("#url-output");
+    var copy_button = $("#copy-button");
+
+    var client = new ZeroClipboard(copy_button);
+
+    client.on("aftercopy", function(e){
+        // Flash url
+        url_output.fadeOut(100).fadeIn(200);
+    });
+
+    // Update url on load in case it's been autofilled
+    update_url();
+    
+    url_form.submit(function(e){
+        e.preventDefault();
+        update_url();
+    });
+
+    url_input.on('input', function(e){
+        update_url();
+    });
+
+    var current_request = null;
+
+    function update_url(){
+        // Don't update if the form field isn't valid
+        url = url_input.val();
+        if(!url_input.get(0).checkValidity()){
+            success_output.hide();
+            error_output.hide();
+            return;
+        }
+
+        // Cancel the previous request to prevent requests from returing out-of-order
+        if(current_request){
+            current_request.abort();
+        }
+
+        current_request = $.ajax({
+            url: "elongate",
+            type: "POST",
+            data: {'url' : url},
+            dataType: "json",
+            success: function(data){
+                url_output.text(data.url) 
+                url_output.attr('href', data.url) 
+                success_output.show();
+                error_output.hide();
+            },
+            error: function(jqXHR, status){
+                // Ignore errors that come from aborting the request
+                if(jqXHR.status === 0 || jqXHR.readyState === 0){
+                    return;
+                }
+
+                if(jqXHR.status === 400){
+                    error_text.text("This URL can't be elongated; Try another");
+                } else{
+                    error_text.text("Something is wrong. Try again later");
+                }
+
+                success_output.hide();
+                error_output.show();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
