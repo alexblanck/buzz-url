@@ -2,7 +2,7 @@ BuzzURL
 ======
 ### Learn this one weird trick for making your URL longer
 
-This site is currently hosted on Google App Engine at [http://buzz-url.appspot.com]()
+This site is currently hosted on Google App Engine at http://buzz-url.appspot.com
 
 ###How it works:
 
