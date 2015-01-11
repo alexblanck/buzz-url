@@ -129,9 +129,18 @@ $(document).ready(function(){
     var current_request = null;
 
     function update_url(){
-        // Don't update if the form field isn't valid
         url = url_input.val();
-        if(!url_input.get(0).checkValidity()){
+        valid = url_input.get(0).checkValidity();
+
+        // Add error styling if input is invalid and nonempty
+        if(!valid && url.length > 0){
+            url_input.parent().addClass("has-error");
+        } else{
+            url_input.parent().removeClass("has-error");
+        }
+
+        // Don't update if the form field isn't valid
+        if(!valid){
             success_output.hide();
             error_output.hide();
             return;
